@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <!DOCTYPE html>
+<html lang="tr" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kütüphane Yönetim Sistemi</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: ['class', '[data-theme="dark"]'],
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 min-h-screen flex flex-col transition-colors duration-200">
+
+    <!-- LOGIN / REGISTER OVERLAY -->
+    <div id="authOverlay" class="fixed inset-0 bg-gray-900/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-gray-100 dark:border-gray-700">
+            <!-- Auth Header Tabs -->
+            <div class="flex border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+                <button id="loginTabBtn" onclick="switchAuthTab('login')" class="flex-1 py-4 text-center font-semibold text-primary-600 border-b-2 border-primary-600 transition">
+                    <i class="fa-solid fa-right-to-bracket mr-2"></i>Giriş Yap
+                </button>
+                <button id="registerTabBtn" onclick="switchAuthTab('register')" class="flex-1 py-4 text-center font-semibold text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition">
+                    <i class="fa-solid fa-user-plus mr-2"></i>Kayıt Ol
+                </button>
+            </div>
+
+            <div class="p-6 md:p-8">
+                <!-- LOGIN FORM -->
+                <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+                    <div class="text-center mb-6">
+                        <div class="inline-flex p-3 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 mb-2">
+                            <i class="fa-solid fa-book-bookmark text-2xl"></i>
+                        </div>
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">Sisteme Giriş Yapın</h2>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Kütüphane hesabınıza erişmek için bilgilerinizi girin.</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-1">E-Posta Adresi</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-envelope absolute left-3 top-3 text-gray-400"></i>
+                            <input type="email" id="loginEmail" required placeholder="ornek@kutuphane.com" class="w-full pl-10 pr-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 outline-none">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Şifre</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-lock absolute left-3 top-3 text-gray-400"></i>
+                            <input type="password" id="loginPassword" required placeholder="••••••••" class="w-full pl-10 pr-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 outline-none">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg shadow-md transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-sign-in-alt"></i> Giriş Yap
+                    </button>
+                </form>
+
+                <!-- REGISTER FORM -->
+                <form id="registerForm" onsubmit="handleRegister(event)" class="space-y-4 hidden">
+                    <div class="text-center mb-4">
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">Yeni Hesap Oluştur</h2>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Sisteme üye olarak kitap kataloglarını inceleyin.</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Ad Soyad</label>
+                        <input type="text" id="regName" required placeholder="Ahmet Yılmaz" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-1">E-Posta Adresi</label>
+                        <input type="email" id="regEmail" required placeholder="ahmet@example.com" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Şifre</label>
+                        <input type="password" id="regPassword" required placeholder="••••••••" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Hesap Türü / Rol</label>
+                        <select id="regRole" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 outline-none">
+                            <option value="user">Normal Üye (Okuyucu)</option>
+                            <option value="admin">Sistem Yöneticisi (Admin)</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg shadow-md transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-user-check"></i> Kaydı Tamamla
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP STRUCTURE -->
+    <div id="appContainer" class="flex-1 flex flex-col hidden">
+        <!-- HEADER / NAVBAR -->
+        <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-30">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="p-2 bg-primary-600 text-white rounded-lg shadow-sm">
+                        <i class="fa-solid fa-book-bookmark text-xl"></i>
+                    </div>
+                    <span class="font-bold text-xl tracking-tight text-gray-900 dark:text-white">Kütüphane<span class="text-primary-600">Pro</span></span>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    <!-- User Profile Info -->
+                    <div class="flex items-center space-x-3 border-r pr-4 border-gray-200 dark:border-gray-700">
+                        <div class="w-9 h-9 rounded-full bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300 font-bold flex items-center justify-center border border-primary-200 dark:border-primary-700" id="userAvatar">
+                            U
+                        </div>
+                        <div class="hidden sm:block text-left">
+                            <div class="text-sm font-semibold text-gray-900 dark:text-white leading-none" id="userName">Kullanıcı</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400 mt-1 capitalize" id="userRoleBadge">Rol</div>
+                        </div>
+                    </div>
+
+                    <!-- Theme Toggle -->
+                    <button id="themeToggleBtn" onclick="toggleTheme()" class="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg transition" title="Tema Değiştir">
+                        <i class="fa-solid fa-moon text-lg dark:hidden"></i>
+                        <i class="fa-solid fa-sun text-lg hidden dark:block"></i>
+                    </button>
+
+                    <!-- Logout Button -->
+                    <button onclick="handleLogout()" class="px-3 py-1.5 text-xs font-medium text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition border border-red-200 dark:border-red-800 flex items-center gap-1">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i> Çıkış
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 flex flex-col md:flex-row gap-8">
+            <!-- SIDEBAR NAVIGATION -->
+            <aside class="w-full md:w-64 flex-shrink-0">
+                <nav class="space-y-1 bg-white dark:bg-gray-800 p-2 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg text-primary-600 bg-primary-50 dark:bg-gray-700/50 transition">
+                        <i class="fa-solid fa-chart-pie w-6"></i> Gösterge Paneli
+                    </button>
+                    <button onclick="switchTab('books')" id="nav-books" class="nav-btn w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
+                        <i class="fa-solid fa-book w-6"></i> Kitap Kataloğu
+                    </button>
+                    <button onclick="switchTab('borrow')" id="nav-borrow" class="admin-only nav-btn w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
+                        <i class="fa-solid fa-hand-holding-hand w-6"></i> Ödünç / İade
+                    </button>
+                    <button onclick="switchTab('members')" id="nav-members" class="admin-only nav-btn w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
+                        <i class="fa-solid fa-users w-6"></i> Üye Yönetimi
+                    </button>
+                    <button onclick="switchTab('my-borrows')" id="nav-my-borrows" class="user-only nav-btn w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
+                        <i class="fa-solid fa-clock-rotate-left w-6"></i> Aldığım Kitaplar
+                    </button>
+                </nav>
+            </aside>
+
+            <!-- MAIN CONTENT AREA -->
+            <main class="flex-1">
+                <!-- DASHBOARD VIEW -->
+                <div id="tab-dashboard" class="tab-content space-y-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-gray-500 uppercase">Toplam Kitap</p>
+                                <h3 class="text-2xl font-bold mt-1" id="stat-total-books">0</h3>
+                            </div>
+                            <div class="p-3 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-lg"><i class="fa-solid fa-book text-xl"></i></div>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-gray-500 uppercase">Aktif Ödünçte</p>
+                                <h3 class="text-2xl font-bold mt-1" id="stat-borrowed-books">0</h3>
+                            </div>
+                            <div class="p-3 bg-amber-100 dark:bg-amber-900/30 text-amber-600 rounded-lg"><i class="fa-solid fa-hand-holding-book text-xl"></i></div>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-gray-500 uppercase">Gecikenler</p>
+                                <h3 class="text-2xl font-bold mt-1 text-red-600" id="stat-overdue-books">0</h3>
+                            </div>
+                            <div class="p-3 bg-red-100 dark:bg-red-900/30 text-red-600 rounded-lg"><i class="fa-solid fa-triangle-exclamation text-xl"></i></div>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-gray-500 uppercase">Toplam Üye</p>
+                                <h3 class="text-2xl font-bold mt-1" id="stat-total-members">0</h3>
+                            </div>
+                            <div class="p-3 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 rounded-lg"><i class="fa-solid fa-users text-xl"></i></div>
+                        </div>
+                    </div>
+
+                    <!-- CHARTS -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                            <h4 class="font-bold text-gray-800 dark:text-gray-100 mb-4">Kategori Dağılımı</h4>
+                            <div class="relative h-64"><canvas id="categoryChart"></canvas></div>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                            <h4 class="font-bold text-gray-800 dark:text-gray-100 mb-4">Son Hareketler</h4>
+                            <div class="space-y-3 max-h-64 overflow-y-auto" id="recentActivityList"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BOOKS VIEW -->
+                <div id="tab-books" class="tab-content space-y-4 hidden">
+                    <div class="flex flex-col sm:flex-row justify-between gap-4 bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                        <div class="flex flex-1 gap-2">
+                            <input type="text" id="bookSearchInput" oninput="renderBooks()" placeholder="Kitap veya yazar ara..." class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 outline-none">
+                            <select id="categoryFilter" onchange="renderBooks()" class="px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600">
+                                <option value="all">Tüm Kategoriler</option>
+                                <option value="Roman">Roman</option>
+                                <option value="Tarih">Tarih</option>
+                                <option value="Bilim Kurgu">Bilim Kurgu</option>
+                                <option value="Felsefe">Felsefe</option>
+                            </select>
+                        </div>
+                        <button onclick="openBookModal()" class="admin-only px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition flex items-center gap-2">
+                            <i class="fa-solid fa-plus"></i> Yeni Kitap
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" id="booksGrid"></div>
+                </div>
+
+                <!-- BORROW VIEW (ADMIN ONLY) -->
+                <div id="tab-borrow" class="tab-content space-y-4 hidden">
+                    <div class="flex justify-between items-center bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                        <h3 class="font-bold text-lg">Ödünç Verilen Kitaplar</h3>
+                        <button onclick="openBorrowModal()" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition flex items-center gap-2">
+                            <i class="fa-solid fa-hand-holding-hand"></i> Kitap Ödünç Ver
+                        </button>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="border-b dark:border-gray-700 text-xs font-semibold text-gray-500 uppercase">
+                                    <th class="p-4">Kitap</th>
+                                    <th class="p-4">Üye</th>
+                                    <th class="p-4">Veriliş</th>
+                                    <th class="p-4">Son Teslim</th>
+                                    <th class="p-4">Durum</th>
+                                    <th class="p-4">İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody id="borrowTableBody" class="divide-y dark:divide-gray-700 text-sm"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- MEMBERS VIEW (ADMIN ONLY) -->
+                <div id="tab-members" class="tab-content space-y-4 hidden">
+                    <div class="flex justify-between items-center bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                        <h3 class="font-bold text-lg">Kayıtlı Üyeler</h3>
+                        <button onclick="openMemberModal()" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition flex items-center gap-2">
+                            <i class="fa-solid fa-user-plus"></i> Yeni Üye Ekle
+                        </button>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="border-b dark:border-gray-700 text-xs font-semibold text-gray-500 uppercase">
+                                    <th class="p-4">Ad Soyad</th>
+                                    <th class="p-4">E-Posta</th>
+                                    <th class="p-4">Rol</th>
+                                    <th class="p-4">Aktif Ödünç</th>
+                                    <th class="p-4">İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody id="membersTableBody" class="divide-y dark:divide-gray-700 text-sm"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- MY BORROWS VIEW (USER ONLY) -->
+                <div id="tab-my-borrows" class="tab-content space-y-4 hidden">
+                    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                        <h3 class="font-bold text-lg">Üzerimdeki Kitaplar</h3>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="border-b dark:border-gray-700 text-xs font-semibold text-gray-500 uppercase">
+                                    <th class="p-4">Kitap</th>
+                                    <th class="p-4">Veriliş Tarihi</th>
+                                    <th class="p-4">Son Teslim Tarihi</th>
+                                    <th class="p-4">Durum</th>
+                                </tr>
+                            </thead>
+                            <tbody id="myBorrowsTableBody" class="divide-y dark:divide-gray-700 text-sm"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- BOOK MODAL -->
+    <div id="bookModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6 space-y-4">
+            <h3 class="text-xl font-bold" id="bookModalTitle">Yeni Kitap Ekle</h3>
+            <form id="bookForm" onsubmit="saveBook(event)" class="space-y-3">
+                <input type="hidden" id="bookId">
+                <div>
+                    <label class="block text-xs font-medium mb-1">Kitap Adı</label>
+                    <input type="text" id="bookTitle" required class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium mb-1">Yazar</label>
+                    <input type="text" id="bookAuthor" required class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium mb-1">Kategori</label>
+                    <input type="text" id="bookCategory" required class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium mb-1">Görsel URL</label>
+                    <input type="url" id="bookCover" placeholder="https://..." class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 outline-none">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModal('bookModal')" class="px-4 py-2 border rounded-lg">İptal</button>
+                    <button type="submit" class="px-4 py-2 bg-primary-600 text-white rounded-lg">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- BORROW MODAL -->
+    <div id="borrowModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6 space-y-4">
+            <h3 class="text-xl font-bold">Kitap Ödünç Ver</h3>
+            <form id="borrowForm" onsubmit="saveBorrow(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium mb-1">Kitap Seçin</label>
+                    <select id="borrowBookSelect" required class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 outline-none"></select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium mb-1">Üye Seçin</label>
+                    <select id="borrowMemberSelect" required class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 outline-none"></select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium mb-1">Son Teslim Tarihi</label>
+                    <input type="date" id="borrowDueDate" required class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 outline-none">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModal('borrowModal')" class="px-4 py-2 border rounded-lg">İptal</button>
+                    <button type="submit" class="px-4 py-2 bg-primary-600 text-white rounded-lg">Ödünç Ver</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MEMBER MODAL -->
+    <div id="memberModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6 space-y-4">
+            <h3 class="text-xl font-bold">Yeni Üye Ekle</h3>
+            <form id="memberForm" onsubmit="saveMember(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium mb-1">Ad Soyad</label>
+                    <input type="text" id="memberName" required class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium mb-1">E-Posta</label>
+                    <input type="email" id="memberEmail" required class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium mb-1">Rol</label>
+                    <select id="memberRole" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 outline-none">
+                        <option value="user">Normal Üye</option>
+                        <option value="admin">Sistem Yöneticisi</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModal('memberModal')" class="px-4 py-2 border rounded-lg">İptal</button>
+                    <button type="submit" class="px-4 py-2 bg-primary-600 text-white rounded-lg">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- DATA STATE ---
+        let currentUser = JSON.parse(localStorage.getItem('lib_currentUser')) || null;
+        let users = JSON.parse(localStorage.getItem('lib_users')) || [
+            { id: '1', name: 'Yönetici Admin', email: 'admin@kutuphane.com', password: '123', role: 'admin' },
+            { id: '2', name: 'Mehmet Yılmaz', email: 'mehmet@example.com', password: '123', role: 'user' }
+        ];
+        let books = JSON.parse(localStorage.getItem('lib_books')) || [
+            { id: '1', title: '1984', author: 'George Orwell', category: 'Bilim Kurgu', cover: 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=400', isBorrowed: false },
+            { id: '2', title: 'Suç ve Ceza', author: 'Dostoyevski', category: 'Roman', cover: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400', isBorrowed: true },
+            { id: '3', title: 'Nutuk', author: 'Mustafa Kemal Atatürk', category: 'Tarih', cover: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=400', isBorrowed: false }
+        ];
+        let borrows = JSON.parse(localStorage.getItem('lib_borrows')) || [
+            { id: '101', bookId: '2', userId: '2', borrowDate: '2023-10-01', dueDate: '2023-10-15', returned: false }
+        ];
+
+        let categoryChartInstance = null;
+
+        // --- INIT APP ---
+        window.addEventListener('DOMContentLoaded', () => {
+            saveData();
+            if (currentUser) {
+                initAppView();
+            } else {
+                document.getElementById('authOverlay').classList.remove('hidden');
+            }
+        });
+
+        function saveData() {
+            localStorage.setItem('lib_users', JSON.stringify(users));
+            localStorage.setItem('lib_books', JSON.stringify(books));
+            localStorage.setItem('lib_borrows', JSON.stringify(borrows));
+            if(currentUser) localStorage.setItem('lib_currentUser', JSON.stringify(currentUser));
+            else localStorage.removeItem('lib_currentUser');
+        }
+
+        // --- AUTH FUNCTIONS ---
+        function switchAuthTab(tab) {
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            const loginBtn = document.getElementById('loginTabBtn');
+            const regBtn = document.getElementById('registerTabBtn');
+
+            if (tab === 'login') {
+                loginForm.classList.remove('hidden');
+                registerForm.classList.add('hidden');
+                loginBtn.className = "flex-1 py-4 text-center font-semibold text-primary-600 border-b-2 border-primary-600 transition";
+                regBtn.className = "flex-1 py-4 text-center font-semibold text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition";
+            } else {
+                loginForm.classList.add('hidden');
+                registerForm.classList.remove('hidden');
+                regBtn.className = "flex-1 py-4 text-center font-semibold text-primary-600 border-b-2 border-primary-600 transition";
+                loginBtn.className = "flex-1 py-4 text-center font-semibold text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition";
+            }
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+
+            const user = users.find(u => u.email === email && u.password === password);
+            if (user) {
+                currentUser = user;
+                saveData();
+                initAppView();
+            } else {
+                alert('Hatalı e-posta veya şifre!');
+            }
+        }
+
+        function handleRegister(e) {
+            e.preventDefault();
+            const name = document.getElementById('regName').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const password = document.getElementById('regPassword').value;
+            const role = document.getElementById('regRole').value;
+
+            if (users.some(u => u.email === email)) {
+                alert('Bu e-posta adresi zaten kayıtlı!');
+                return;
+            }
+
+            const newUser = { id: Date.now().toString(), name, email, password, role };
+            users.push(newUser);
+            currentUser = newUser;
+            saveData();
+            initAppView();
+        }
+
+        function handleLogout() {
+            currentUser = null;
+            saveData();
+            document.getElementById('appContainer').classList.add('hidden');
+            document.getElementById('authOverlay').classList.remove('hidden');
+        }
+
+        // --- APP VIEW INITIALIZATION ---
+        function initAppView() {
+            document.getElementById('authOverlay').classList.add('hidden');
+            document.getElementById('appContainer').classList.remove('hidden');
+
+            document.getElementById('userName').innerText = currentUser.name;
+            document.getElementById('userAvatar').innerText = currentUser.name.charAt(0).toUpperCase();
+            document.getElementById('userRoleBadge').innerText = currentUser.role === 'admin' ? 'Yönetici' : 'Normal Üye';
+
+            // Role visibility setup
+            const adminElements = document.querySelectorAll('.admin-only');
+            const userElements = document.querySelectorAll('.user-only');
+
+            if (currentUser.role === 'admin') {
+                adminElements.forEach(el => el.classList.remove('hidden'));
+                userElements.forEach(el => el.classList.add('hidden'));
+            } else {
+                adminElements.forEach(el => el.classList.add('hidden'));
+                userElements.forEach(el => el.classList.remove('hidden'));
+            }
+
+            switchTab('dashboard');
+            updateDashboard();
+        }
+
+        // --- NAVIGATION ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(el => {
+                el.classList.remove('text-primary-600', 'bg-primary-50', 'dark:bg-gray-700/50');
+                el.classList.add('text-gray-600', 'dark:text-gray-300');
+            });
+
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`nav-${tabId}`);
+            if (activeBtn) {
+                activeBtn.classList.add('text-primary-600', 'bg-primary-50', 'dark:bg-gray-700/50');
+            }
+
+            if (tabId === 'dashboard') updateDashboard();
+            if (tabId === 'books') renderBooks();
+            if (tabId === 'borrow') renderBorrowTable();
+            if (tabId === 'members') renderMembersTable();
+            if (tabId === 'my-borrows') renderMyBorrowsTable();
+        }
+
+        // --- DASHBOARD RENDER ---
+        function updateDashboard() {
+            document.getElementById('stat-total-books').innerText = books.length;
+            document.getElementById('stat-borrowed-books').innerText = borrows.filter(b => !b.returned).length;
+            
+            const today = new Date().toISOString().split('T')[0];
+            const overdue = borrows.filter(b => !b.returned && b.dueDate < today).length;
+            document.getElementById('stat-overdue-books').innerText = overdue;
+            document.getElementById('stat-total-members').innerText = users.length;
+
+            renderRecentActivity();
+            renderCategoryChart();
+        }
+
+        function renderRecentActivity() {
+            const list = document.getElementById('recentActivityList');
+            list.innerHTML = '';
+            
+            const recent = [...borrows].reverse().slice(0, 5);
+            recent.forEach(b => {
+                const book = books.find(x => x.id === b.bookId);
+                const user = users.find(x => x.id === b.userId);
+                
+                const item = document.createElement('div');
+                item.className = "p-3 rounded-lg bg-gray-50 dark:bg-gray-700/30 flex items-center justify-between text-xs";
+                item.innerHTML = `
+                    <div>
+                        <span class="font-bold text-gray-900 dark:text-white">${user ? user.name : 'Bilinmeyen'}</span>, 
+                        <span class="italic">"${book ? book.title : 'Kitap'}"</span> kitabını aldı.
+                    </div>
+                    <span class="text-gray-400">${b.borrowDate}</span>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function renderCategoryChart() {
+            const counts = {};
+            books.forEach(b => { counts[b.category] = (counts[b.category] || 0) + 1; });
+
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            if (categoryChartInstance) categoryChartInstance.destroy();
+
+            categoryChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(counts),
+                    datasets: [{
+                        data: Object.values(counts),
+                        backgroundColor: ['#0ea5e9', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899']
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        // --- BOOKS SECTION ---
+        function renderBooks() {
+            const search = document.getElementById('bookSearchInput').value.toLowerCase();
+            const category = document.getElementById('categoryFilter').value;
+            const grid = document.getElementById('booksGrid');
+            grid.innerHTML = '';
+
+            const filtered = books.filter(b => {
+                const matchSearch = b.title.toLowerCase().includes(search) || b.author.toLowerCase().includes(search);
+                const matchCat = category === 'all' || b.category === category;
+                return matchSearch && matchCat;
+            });
+
+            filtered.forEach(b => {
+                const card = document.createElement('div');
+                card.className = "bg-white dark:bg-gray-800 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col justify-between";
+                card.innerHTML = `
+                    <img src="${b.cover}" class="w-full h-48 object-cover">
+                    <div class="p-4 flex-1 flex flex-col justify-between">
+                        <div>
+                            <span class="text-xs px-2 py-0.5 rounded bg-primary-100 text-primary-700 font-medium">${b.category}</span>
+                            <h4 class="font-bold text-base mt-2">${b.title}</h4>
+                            <p class="text-xs text-gray-500">${b.author}</p>
+                        </div>
+                        <div class="mt-4 flex items-center justify-between">
+                            <span class="text-xs px-2 py-1 rounded font-semibold ${b.isBorrowed ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}">
+                                ${b.isBorrowed ? 'Ödünçte' : 'Mevcut'}
+                            </span>
+                            ${currentUser.role === 'admin' ? `
+                                <button onclick="deleteBook('${b.id}')" class="text-red-500 hover:text-red-700 text-xs"><i class="fa-solid fa-trash"></i> Sil</button>
+                            ` : `
+                                ${!b.isBorrowed ? `<button onclick="quickBorrow('${b.id}')" class="px-3 py-1 bg-primary-600 text-white rounded text-xs">Ödünç Al</button>` : ''}
+                            `}
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function openBookModal() {
+            document.getElementById('bookForm').reset();
+            document.getElementById('bookModal').classList.remove('hidden');
+        }
+
+        function saveBook(e) {
+            e.preventDefault();
+            const newBook = {
+                id: Date.now().toString(),
+                title: document.getElementById('bookTitle').value,
+                author: document.getElementById('bookAuthor').value,
+                category: document.getElementById('bookCategory').value,
+                cover: document.getElementById('bookCover').value || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=400',
+                isBorrowed: false
+            };
+            books.push(newBook);
+            saveData();
+            closeModal('bookModal');
+            renderBooks();
+        }
+
+        function deleteBook(id) {
+            books = books.filter(b => b.id !== id);
+            saveData();
+            renderBooks();
+        }
+
+        function quickBorrow(bookId) {
+            const today = new Date();
+            const dueDate = new Date();
+            dueDate.setDate(today.getDate() + 14);
+
+            const newBorrow = {
+                id: Date.now().toString(),
+                bookId: bookId,
+                userId: currentUser.id,
+                borrowDate: today.toISOString().split('T')[0],
+                dueDate: dueDate.toISOString().split('T')[0],
+                returned: false
+            };
+
+            const book = books.find(b => b.id === bookId);
+            if(book) book.isBorrowed = true;
+
+            borrows.push(newBorrow);
+            saveData();
+            renderBooks();
+            alert('Kitap başarıyla ödünç alındı!');
+        }
+
+        // --- BORROW SECTION (ADMIN) ---
+        function renderBorrowTable() {
+            const tbody = document.getElementById('borrowTableBody');
+            tbody.innerHTML = '';
+            
+            borrows.filter(b => !b.returned).forEach(b => {
+                const book = books.find(x => x.id === b.bookId);
+                const user = users.find(x => x.id === b.userId);
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="p-4 font-semibold">${book ? book.title : 'Bilinmeyen'}</td>
+                    <td class="p-4">${user ? user.name : 'Bilinmeyen'}</td>
+                    <td class="p-4">${b.borrowDate}</td>
+                    <td class="p-4">${b.dueDate}</td>
+                    <td class="p-4"><span class="px-2 py-1 bg-amber-100 text-amber-700 text-xs rounded">Ödünçte</span></td>
+                    <td class="p-4"><button onclick="returnBook('${b.id}')" class="px-3 py-1 bg-green-600 text-white rounded text-xs">Teslim Al</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function openBorrowModal() {
+            const bookSelect = document.getElementById('borrowBookSelect');
+            const memberSelect = document.getElementById('borrowMemberSelect');
+            
+            bookSelect.innerHTML = books.filter(b => !b.isBorrowed).map(b => `<option value="${b.id}">${b.title}</option>`).join('');
+            memberSelect.innerHTML = users.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+
+            document.getElementById('borrowModal').classList.remove('hidden');
+        }
+
+        function saveBorrow(e) {
+            e.preventDefault();
+            const bookId = document.getElementById('borrowBookSelect').value;
+            const userId = document.getElementById('borrowMemberSelect').value;
+            const dueDate = document.getElementById('borrowDueDate').value;
+
+            borrows.push({
+                id: Date.now().toString(),
+                bookId, userId,
+                borrowDate: new Date().toISOString().split('T')[0],
+                dueDate,
+                returned: false
+            });
+
+            const book = books.find(b => b.id === bookId);
+            if (book) book.isBorrowed = true;
+
+            saveData();
+            closeModal('borrowModal');
+            renderBorrowTable();
+        }
+
+        function returnBook(borrowId) {
+            const borrow = borrows.find(b => b.id === borrowId);
+            if (borrow) {
+                borrow.returned = true;
+                const book = books.find(b => b.id === borrow.bookId);
+                if (book) book.isBorrowed = false;
+                saveData();
+                renderBorrowTable();
+            }
+        }
+
+        // --- MEMBERS SECTION ---
+        function renderMembersTable() {
+            const tbody = document.getElementById('membersTableBody');
+            tbody.innerHTML = '';
+            users.forEach(u => {
+                const count = borrows.filter(b => b.userId === u.id && !b.returned).length;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="p-4 font-semibold">${u.name}</td>
+                    <td class="p-4">${u.email}</td>
+                    <td class="p-4 capitalize">${u.role}</td>
+                    <td class="p-4">${count} Kitap</td>
+                    <td class="p-4"><button onclick="deleteMember('${u.id}')" class="text-red-500 text-xs">Sil</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function openMemberModal() {
+            document.getElementById('memberModal').classList.remove('hidden');
+        }
+
+        function saveMember(e) {
+            e.preventDefault();
+            users.push({
+                id: Date.now().toString(),
+                name: document.getElementById('memberName').value,
+                email: document.getElementById('memberEmail').value,
+                password: '123',
+                role: document.getElementById('memberRole').value
+            });
+            saveData();
+            closeModal('memberModal');
+            renderMembersTable();
+        }
+
+        function deleteMember(id) {
+            users = users.filter(u => u.id !== id);
+            saveData();
+            renderMembersTable();
+        }
+
+        // --- MY BORROWS (USER) ---
+        function renderMyBorrowsTable() {
+            const tbody = document.getElementById('myBorrowsTableBody');
+            tbody.innerHTML = '';
+            
+            const myBorrows = borrows.filter(b => b.userId === currentUser.id && !b.returned);
+            myBorrows.forEach(b => {
+                const book = books.find(x => x.id === b.bookId);
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="p-4 font-semibold">${book ? book.title : 'Bilinmeyen'}</td>
+                    <td class="p-4">${b.borrowDate}</td>
+                    <td class="p-4">${b.dueDate}</td>
+                    <td class="p-4"><span class="px-2 py-1 bg-amber-100 text-amber-700 text-xs rounded">Aktif</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // --- UTILS ---
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        function toggleTheme() {
+            const body = document.documentElement;
+            body.setAttribute('data-theme', body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+        }
+    </script>
+</body>
+</html>
+</body>
+</html>
